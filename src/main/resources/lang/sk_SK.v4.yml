@@ -1,0 +1,50 @@
+# Slovak translation by daretmavi
+
+lang_load_success: "Jazyk sk_SK bol úspešne načítaný!"
+
+plugin_success_load: "Plugin Lunamatic bol úspešne povolený. Verzia: "
+
+update_check: "Kontrola aktualizácií..."
+update_found: "K dispozícií je nová verzia %a (tvoja aktuálna verzia je %b)! Novú verziu stiahni tu: https://modrinth.com/plugin/lunamatic"
+update_error: "Nie je možné skontrolovať aktualizácie: "
+up_to_date: "Verzia je aktuálna!"
+
+cmd_running: "Aktuálna verzia pluginu Lunamatic: "
+
+cmd_reload_success: "Načítanie pluginu Lunamatic prebehlo úspešne!"
+cmd_reload_fail: "Pri načítavaní pluginu Lunamatic došlo k chybe: "
+cmd_reload_warn: "Pri opakovanom načítavaní pluginu Lunamatic, môže dôjsť k chybám.\nOpätovné načítavanie používaj len na testovanie."
+
+cmd_lang: "Načítaný jazyk: "
+
+cmd_blood_moon_enabled: "Krvavý mesiac je povolený: "
+cmd_blood_moon_now: "Krvavý mesiac práve prebieha: "
+cmd_blood_moon_today: "Krvavý mesiac prebehne dnes: "
+
+cmd_harv_moon_enabled: "Úrodný mesiac je povolený: "
+cmd_harv_moon_now: "Úrodný mesiac práve prebieha: "
+cmd_harv_moon_today: "Úrodný mesiac prebehne dnes: "
+
+cmd_disabled_worlds: "Svety kde je Lunamatic zakázaný: "
+cmd_curr_phase: "Aktuálna fáza mesiaca: "
+
+sched_invalid_blood: "Bol zistený chybný krvavý mesiac! Bude preskočený..."
+sched_invalid_harv: "Bol zistený chybný úrodný mesiac! Bude preskočený..."
+
+sched_daydef_reset: "Obnovovanie predvoleného nastavenia dňa..."
+
+harvest_moon_tonight: "Úrodný mesiac bude dnes v noci."
+full_moon_tonight: "Spln mesiaca bude dnes v noci."
+blood_moon_tonight: "Krvavý mesiac bude dnes v noci."
+new_moon_tonight: "Nov mesiaca bude dnes v noci."
+
+grass_growing: "Pssst.. počuješ ako tráva rastie?"
+lucky_feel: "Cítiš sa byť štastný!"
+wary_feel: "Pociťuješ závan strachu..."
+
+blood_moon_sleep: "Krvavý mesiac žiari! Nemôžeš zaspať!"
+
+cmd_no_moon_world: "Lunamatic na tomto svete nebeží!"
+
+world_load_success: "Úspešne načítaný(é) svet(y): "
+
