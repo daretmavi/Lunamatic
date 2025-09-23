@@ -39,7 +39,7 @@ dependencies {
     implementation("co.aikar:acf-paper:0.5.1-SNAPSHOT")
     implementation("net.kyori:adventure-api:4.18.0")
     // MockBukkit for unit tests
-    testImplementation("com.github.MockBukkit:MockBukkit:v4.49.0")
+    testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v1.21:4.76.1")
     // Use the JUnit BOM to align needed 5.12 artifacts with MockBukkit
     testImplementation(platform("org.junit:junit-bom:5.12.2"))
     testImplementation("org.junit.jupiter:junit-jupiter")
