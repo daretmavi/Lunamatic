@@ -38,8 +38,9 @@ dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
     implementation("co.aikar:acf-paper:0.5.1-SNAPSHOT")
     implementation("net.kyori:adventure-api:4.18.0")
-    // MockBukkit for unit tests
-    testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v1.21:4.76.1")
+    // MockBukkit for unit tests, expose paper as well
+    testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v1.21:4.49.0")
+    testImplementation("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
     // Use the JUnit BOM to align needed 5.12 artifacts with MockBukkit
     testImplementation(platform("org.junit:junit-bom:5.12.2"))
     testImplementation("org.junit.jupiter:junit-jupiter")
