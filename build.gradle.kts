@@ -4,13 +4,13 @@ import java.net.URI
 plugins {
     java
     id("xyz.jpenilla.run-paper") version "2.3.1"
-    id("com.gradleup.shadow") version "8.3.3"
+    id("com.gradleup.shadow") version "9.1.0"
 }
 
 group = "org.evlis"
-version = "2.0.7"
+version = "2.0.8-26.2"
 
-val targetJavaVersion = 21
+val targetJavaVersion = 25
 val junitVersion = "5.12.2"
 
 repositories {
@@ -35,12 +35,11 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:26.2.build.121-stable")
     implementation("co.aikar:acf-paper:0.5.1-SNAPSHOT")
-    implementation("net.kyori:adventure-api:4.18.0")
-    // MockBukkit for unit tests, expose paper as well
-    testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v1.21:4.49.0")
-    testImplementation("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
+    // MockBukkit for unit tests, expose the matching Paper 26.2 API
+    testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v26.2:4.116.1")
+    testImplementation("io.papermc.paper:paper-api:26.2.build.111-stable")
     // Use the JUnit BOM to align needed 5.12 artifacts with MockBukkit
     testImplementation(platform("org.junit:junit-bom:5.12.2"))
     testImplementation("org.junit.jupiter:junit-jupiter")
@@ -80,37 +79,30 @@ tasks {
     }
     runServer {
         // Keep runServer task to inherit project plugin
-        minecraftVersion("1.21.4")
+        minecraftVersion("26.2")
     }
 }
 
 // Test Paper run & immediately shut down, for github actions
 tasks.register<RunServer>("runServerTest") {
     dependsOn(tasks.shadowJar)
-    // Accept a Minecraft version via -PmcVersion=1.21.5, default to 1.21.4
-    val mcVersion = project.findProperty("mcVersion") as String? ?: "1.21.4"
+    // Accept a Minecraft version via -PmcVersion=..., default to 26.2
+    val mcVersion = project.findProperty("mcVersion") as String? ?: "26.2"
     minecraftVersion(mcVersion)
     downloadPlugins {
         github("Ifiht", "AutoStop", "v1.2.0", "AutoStop-1.2.0.jar")
     }
     pluginJars.from(tasks.shadowJar)
 }
-// Start a local test server for login & manual testing
-tasks.register<RunServer>("runServerInteractive_1-21-1") {
+// Start a local Paper 26.2 test server for login & manual testing
+tasks.register<RunServer>("runServerInteractive_26-2") {
     dependsOn(tasks.shadowJar)
-    minecraftVersion("1.21.1")
+    minecraftVersion("26.2")
     pluginJars.from(tasks.shadowJar)
 }
-// Start a local test server for login & manual testing
-tasks.register<RunServer>("runServerInteractive_1-21-4") {
-    dependsOn(tasks.shadowJar)
-    minecraftVersion("1.21.4")
-    pluginJars.from(tasks.shadowJar)
-}
-
 // Start a local Folia server for manual testing
 runPaper.folia.registerTask {
-    minecraftVersion("1.20.6")
+    minecraftVersion("26.2")
 }
 
 tasks.register("checkServerLogs") {
