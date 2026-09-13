@@ -14,7 +14,7 @@ on:
     branches: [ "main" ]
 
 env:
-  MC_VERSION: 1.21.4
+  MC_VERSION: 26.2
 
 jobs:
   build:
@@ -24,10 +24,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 21
+
+      - name: Set up JDK 25
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
+          java-version: '25'
           distribution: 'temurin'
           cache: 'gradle'
 
@@ -49,17 +50,17 @@ jobs:
 
 
   dependency-submission:
-
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 21
+
+      - name: Set up JDK 25
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
+          java-version: '25'
           distribution: 'temurin'
           cache: 'gradle'
 
@@ -67,14 +68,17 @@ jobs:
   test-paper:
     needs: build
     runs-on: ubuntu-latest
+
     steps:
       - name: Download plugin JAR
         uses: actions/download-artifact@v4
         with:
           name: plugin-jar
           path: plugins
+
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3
+
       - name: Run PaperMC Server in Docker with plugin
         run: |
           docker run -d \
@@ -88,33 +92,44 @@ jobs:
           -v ${{ github.workspace }}/plugins:/plugins \
           -p 127.0.0.1:25565:25565 \
           itzg/minecraft-server:latest
+
           echo "Starting Paper server..."
           sleep 2
+
       - name: Delayed server health check
         run: |
           echo "Waiting for server to become healthy..."
+
           for i in {1..20}; do
             healthy=$(docker exec test-paper-server mc-monitor status --host 127.0.0.1 || echo "unhealthy")
             echo "Status: $healthy"
+
             if [[ "$healthy" == *"online"* ]]; then
               echo "Server is online!"
               docker exec -i test-paper-server rcon-cli "luma cyclemoonstates"
               exit 0
             fi
+
             sleep 6
           done
+
           echo "Server failed health check, timeout."
           docker logs test-paper-server
           exit 1
+
       - name: Stop the server
         run: docker stop test-paper-server || true
+
       - name: Retrieve server logs
         run: docker logs test-paper-server
+
       - name: Check Minecraft server logs for errors
         run: |
           echo "Checking container logs for errors..."
+
           LOG_OUTPUT=$(docker logs test-paper-server 2>&1)
           ERROR_LINES=$(echo "$LOG_OUTPUT" | grep 'ERROR]:' || true)
+
           if [ -n "$ERROR_LINES" ]; then
             echo "Errors were found in the server logs:"
             echo "$ERROR_LINES"
@@ -122,6 +137,7 @@ jobs:
           else
             echo "No errors found in the container logs."
           fi
+
       - name: Stop and clean up
         if: always()
         run: docker rm -f test-paper-server || true
@@ -130,15 +146,18 @@ jobs:
   test-purpur:
     needs: build
     runs-on: ubuntu-latest
+
     steps:
       - name: Download plugin JAR
         uses: actions/download-artifact@v4
         with:
           name: plugin-jar
           path: plugins
+
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3
-      - name: Run PaperMC Server in Docker with plugin
+
+      - name: Run Purpur Server in Docker with plugin
         run: |
           docker run -d \
           --name test-purpur-server \
@@ -150,33 +169,44 @@ jobs:
           -v ${{ github.workspace }}/plugins:/plugins \
           -p 127.0.0.1:25565:25565 \
           itzg/minecraft-server:latest
+
           echo "Starting Purpur server..."
           sleep 2
+
       - name: Delayed server health check
         run: |
           echo "Waiting for server to become healthy..."
+
           for i in {1..20}; do
             healthy=$(docker exec test-purpur-server mc-monitor status --host 127.0.0.1 || echo "unhealthy")
             echo "Status: $healthy"
+
             if [[ "$healthy" == *"online"* ]]; then
               echo "Server is online!"
               docker exec -i test-purpur-server rcon-cli "luma cyclemoonstates"
               exit 0
             fi
+
             sleep 6
           done
+
           echo "Server failed health check, timeout."
           docker logs test-purpur-server
           exit 1
+
       - name: Stop the server
         run: docker stop test-purpur-server || true
+
       - name: Retrieve server logs
         run: docker logs test-purpur-server
+
       - name: Check Minecraft server logs for errors
         run: |
           echo "Checking container logs for errors..."
+
           LOG_OUTPUT=$(docker logs test-purpur-server 2>&1)
           ERROR_LINES=$(echo "$LOG_OUTPUT" | grep 'ERROR]:' || true)
+
           if [ -n "$ERROR_LINES" ]; then
             echo "Errors were found in the server logs:"
             echo "$ERROR_LINES"
@@ -184,6 +214,7 @@ jobs:
           else
             echo "No errors found in the container logs."
           fi
+
       - name: Stop and clean up
         if: always()
         run: docker rm -f test-purpur-server || true
@@ -192,61 +223,75 @@ jobs:
   test-folia:
     needs: build
     runs-on: ubuntu-latest
+
     steps:
       - name: Download plugin JAR
         uses: actions/download-artifact@v4
         with:
           name: plugin-jar
           path: plugins
+
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3
-      - name: Run PaperMC Server in Docker with plugin
+
+      - name: Run Folia Server in Docker with plugin
         run: |
           docker run -d \
           --name test-folia-server \
           -e EULA=TRUE \
           -e TYPE=FOLIA \
-          -e VERSION=1.21.4 \
+          -e VERSION=${MC_VERSION} \
           -e MAX_TICK_TIME=-1 \
           -e JVM_DD_OPTS=disable.watchdog:true \
           -v ${{ github.workspace }}/plugins:/plugins \
           -p 127.0.0.1:25565:25565 \
           itzg/minecraft-server:latest
+
           echo "Starting Folia server..."
           sleep 2
+
       - name: Delayed server health check
         run: |
           echo "Waiting for server to become healthy..."
+
           for i in {1..20}; do
             healthy=$(docker exec test-folia-server mc-monitor status --host 127.0.0.1 || echo "unhealthy")
             echo "Status: $healthy"
+
             if [[ "$healthy" == *"online"* ]]; then
               echo "Server is online!"
               docker exec -i test-folia-server rcon-cli "luma cyclemoonstates"
               exit 0
             fi
+
             sleep 6
           done
+
           echo "Server failed health check, timeout."
           docker logs test-folia-server
           exit 1
+
       - name: Stop the server
         run: docker stop test-folia-server || true
+
       - name: Retrieve server logs
         run: docker logs test-folia-server
+
       - name: Check Minecraft server logs for errors
         run: |
           echo "Checking container logs for errors..."
+
           LOG_OUTPUT=$(docker logs test-folia-server 2>&1)
-          
           ERROR_LINES=$(echo "$LOG_OUTPUT" | grep 'ERROR]: [Lunamatic]' || true)
+
           if [ -n "$ERROR_LINES" ]; then
             echo "Errors were found in the server logs:"
             echo "$ERROR_LINES"
             exit 1
           else
-            echo "No errors found in the container logs."
+            echo "No Lunamatic errors found in the container logs."
           fi
+
       - name: Stop and clean up
         if: always()
         run: docker rm -f test-folia-server || true
