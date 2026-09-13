@@ -9,25 +9,70 @@ lang: "en_US"
 # Choose which moon effects to enable
 fullMoonEnabled: true
 newMoonEnabled: true
+
 ## Ignored unless fullMoonEnabled == true
 harvestMoonEnabled: true
+
 ## Enable Allay spawning while harvest moon is active
 harvestMoonSpawnAllay: true
+
 ## Ignored unless newMoonEnabled == true
 bloodMoonEnabled: true
+
 ## Enable Vex spawning while blood moon is active
 bloodMoonSpawnVex: true
+
 ## Enable sleeping during a blood moon
 bloodMoonAllowSleep: false
+
 # Chance for Blood and Harvest Moons ###
 # This sets the number of sides in the dice roll,
 # e.g. 2 = coin-toss (50/50), 6 = normal die (17% chance)
 bloodMoonDieSides: 2
 harvestMoonDieSides: 2
+
 # Set worlds to disable moon-effects on ###
 # by design both nether & the_end cannot have moon effects
 disabledWorlds:
   - world_nether
   - world_the_end
+
 # Do you want to check for updates at server start?
 checkForUpdates: true
+
+# Blood Moon visual effects
+#
+# bloodMoonVisuals.enabled:
+#   Master switch for all Blood Moon visual effects.
+#
+# Every visual component has its own enabled switch and color.
+# Disabling one component leaves that part of the normal
+# Minecraft environment unchanged.
+#
+# Default visual style:
+# - very dark blood-red sky
+# - very dark red fog
+# - only a subtle red tint on blocks and ambient lighting
+
+bloodMoonVisuals:
+  enabled: true
+
+  ambientLight:
+    enabled: true
+    color: "#241010"
+
+  blockLight:
+    enabled: true
+    color: "#fff2f2"
+
+  skyLight:
+    enabled: true
+    color: "#9f1b22"
+
+  sky:
+    enabled: true
+    color: "#720008"
+
+  fog:
+    enabled: true
+    color: "#3a080d"

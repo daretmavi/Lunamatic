@@ -1,0 +1,8 @@
+name: Lunamatic
+version: '${version}'
+main: org.evlis.lunamatic.Lunamatic
+description: A Minecraft moon events plugin
+author: fork-daretmavi
+api-version: '26.2'
+
+bootstrapper: org.evlis.lunamatic.LunamaticBootstrap

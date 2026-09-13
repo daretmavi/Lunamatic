@@ -1,7 +1,9 @@
 name: Lunamatic
 version: ${version}
 main: org.evlis.lunamatic.Lunamatic
-api-version: '1.21'
-author: ifiht
+api-version: '26.2'
+author: fork daretmavi, original ifiht
+description: A Paper and Folia moon plugin with configurable Blood Moon effects.
+website: https://github.com/daretmavi/Lunamatic
 folia-supported: true
 load: STARTUP
