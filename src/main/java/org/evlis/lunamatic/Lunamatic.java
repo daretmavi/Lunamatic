@@ -1,3 +1,4 @@
+
 package org.evlis.lunamatic;
 
 import co.aikar.commands.PaperCommandManager;
@@ -17,11 +18,14 @@ import org.evlis.lunamatic.events.TimeSkip;
 import org.evlis.lunamatic.triggers.Scheduler;
 import org.evlis.lunamatic.utilities.LangManager;
 
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.module.ModuleDescriptor;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.List;
 
 public final class Lunamatic extends JavaPlugin {
     private static Lunamatic instance;
@@ -34,8 +38,6 @@ public final class Lunamatic extends JavaPlugin {
     public EntitySpawn entitySpawn;
 
     private final ComponentLogger logger = getComponentLogger();
-
-    private static final String REQUIRED_VERSION = "26.2";
 
     private static final String GITHUB_RELEASE_API =
             "https://api.github.com/repos/daretmavi/Lunamatic/releases/latest";
@@ -52,14 +54,24 @@ public final class Lunamatic extends JavaPlugin {
         String serverVersion = getServer().getMinecraftVersion();
         String currentVersion = this.getPluginMeta().getVersion();
 
-        // Check server version, log error if not supported.
-        if (!serverVersion.startsWith(REQUIRED_VERSION)) {
-            logger.info(
-                    "Unsupported server version detected! Expected ver: "
-                            + REQUIRED_VERSION
+        // Check whether this server version is supported.
+        List<String> supportedVersions = loadSupportedVersions();
+
+        if (supportedVersions.isEmpty()) {
+            logger.warn(
+                    "Could not check server compatibility because "
+                            + "supported-versions.json is missing or invalid."
+            );
+        } else if (supportedVersions.stream()
+                .noneMatch(serverVersion::equals)) {
+            logger.warn(
+                    "Unsupported server version detected! Supported versions: "
+                            + supportedVersions
                             + ", Your version: "
                             + serverVersion
             );
+        } else {
+            logger.info("Detected supported server version: " + serverVersion);
         }
 
         // Config Initialization
@@ -157,6 +169,59 @@ public final class Lunamatic extends JavaPlugin {
         BloodMoonVisuals.resetAll(this);
 
         logger.info("Lunamatic has been disabled.");
+    }
+
+    private List<String> loadSupportedVersions() {
+        try (InputStream input = getResource("supported-versions.json")) {
+            if (input == null) {
+                logger.error(
+                        "Missing supported-versions.json in plugin resources."
+                );
+                return List.of();
+            }
+
+            try (InputStreamReader reader =
+                         new InputStreamReader(input, StandardCharsets.UTF_8)) {
+                JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
+                JsonArray versions = json.getAsJsonArray("supportedVersions");
+
+                if (versions == null) {
+                    logger.error(
+                            "Invalid supported-versions.json: "
+                                    + "missing 'supportedVersions' array."
+                    );
+                    return List.of();
+                }
+
+                List<String> result = new ArrayList<>();
+
+                for (JsonElement version : versions) {
+                    if (version == null || !version.isJsonPrimitive()
+                            || !version.getAsJsonPrimitive().isString()) {
+                        continue;
+                    }
+
+                    String value = version.getAsString().trim();
+
+                    if (value.matches("\\d+\\.\\d+") && !result.contains(value)) {
+                        result.add(value);
+                    }
+                }
+
+                if (result.isEmpty()) {
+                    logger.error(
+                            "Invalid supported-versions.json: "
+                                    + "no valid versions were found."
+                    );
+                    return List.of();
+                }
+
+                return List.copyOf(result);
+            }
+        } catch (Exception e) {
+            logger.error("Failed to load supported-versions.json.", e);
+            return List.of();
+        }
     }
 
     public void registerCommands() {

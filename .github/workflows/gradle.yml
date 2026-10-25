@@ -1,26 +1,14 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-# This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
-
 name: Overall Status
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
-
-env:
-  MC_VERSION: 26.2
+    branches: ["main"]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
 
     steps:
       - uses: actions/checkout@v4
@@ -28,26 +16,20 @@ jobs:
       - name: Set up JDK 25
         uses: actions/setup-java@v4
         with:
-          java-version: '25'
-          distribution: 'temurin'
-          cache: 'gradle'
+          java-version: "25"
+          distribution: "temurin"
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4 # v4.0.0
+        uses: gradle/actions/setup-gradle@v4
 
-      - name: Execute Gradle build
+      - name: Build with Gradle Wrapper
         run: ./gradlew build
 
       - name: Upload plugin JAR
         uses: actions/upload-artifact@v4
         with:
           name: plugin-jar
-          path: build/libs/*all.jar
-          retention-days: 4
-
-      - name: Clean the Server Plugins Cache
-        run: ./gradlew cleanPaperPluginsCache
-
+          path: build/libs/*.jar
 
   dependency-submission:
     runs-on: ubuntu-latest
@@ -60,238 +42,179 @@ jobs:
       - name: Set up JDK 25
         uses: actions/setup-java@v4
         with:
-          java-version: '25'
-          distribution: 'temurin'
-          cache: 'gradle'
+          java-version: "25"
+          distribution: "temurin"
 
+      - name: Generate and submit dependency graph
+        uses: gradle/actions/dependency-submission@v4
 
   test-paper:
     needs: build
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        mc-version: ["26.2", "26.3"]
+
     steps:
       - name: Download plugin JAR
         uses: actions/download-artifact@v4
         with:
           name: plugin-jar
-          path: plugins
+          path: plugin
 
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v3
-
-      - name: Run PaperMC Server in Docker with plugin
+      - name: Start Paper server
         run: |
           docker run -d \
-          --name test-paper-server \
-          -e EULA=TRUE \
-          -e TYPE=PAPER \
-          -e ONLINE_MODE=FALSE \
-          -e VERSION=${MC_VERSION} \
-          -e MAX_TICK_TIME=-1 \
-          -e JVM_DD_OPTS=disable.watchdog:true \
-          -v ${{ github.workspace }}/plugins:/plugins \
-          -p 127.0.0.1:25565:25565 \
-          itzg/minecraft-server:latest
+            --name minecraft \
+            -p 25565:25565 \
+            -e EULA=TRUE \
+            -e TYPE=PAPER \
+            -e VERSION=${{ matrix.mc-version }} \
+            -e MEMORY=2G \
+            -v "${{ github.workspace }}/plugin:/plugins" \
+            itzg/minecraft-server:latest
 
-          echo "Starting Paper server..."
-          sleep 2
-
-      - name: Delayed server health check
+      - name: Wait for server startup
         run: |
-          echo "Waiting for server to become healthy..."
-
-          for i in {1..20}; do
-            healthy=$(docker exec test-paper-server mc-monitor status --host 127.0.0.1 || echo "unhealthy")
-            echo "Status: $healthy"
-
-            if [[ "$healthy" == *"online"* ]]; then
-              echo "Server is online!"
-              docker exec -i test-paper-server rcon-cli "luma cyclemoonstates"
+          for i in {1..60}; do
+            if docker exec minecraft rcon-cli "list" >/dev/null 2>&1; then
+              echo "Paper server is ready"
               exit 0
             fi
-
-            sleep 6
+            sleep 10
           done
-
-          echo "Server failed health check, timeout."
-          docker logs test-paper-server
+          echo "Paper server failed to start"
+          docker logs minecraft
           exit 1
 
-      - name: Stop the server
-        run: docker stop test-paper-server || true
+      - name: Test Lunamatic
+        run: docker exec minecraft rcon-cli "luma cyclemoonstates"
 
-      - name: Retrieve server logs
-        run: docker logs test-paper-server
-
-      - name: Check Minecraft server logs for errors
+      - name: Check server logs
+        if: always()
         run: |
-          echo "Checking container logs for errors..."
-
-          LOG_OUTPUT=$(docker logs test-paper-server 2>&1)
-          ERROR_LINES=$(echo "$LOG_OUTPUT" | grep 'ERROR]:' || true)
-
-          if [ -n "$ERROR_LINES" ]; then
-            echo "Errors were found in the server logs:"
-            echo "$ERROR_LINES"
+          docker logs minecraft 2>&1 | tee paper.log
+          if grep -E '\[ERROR\]:' paper.log; then
+            echo "Errors detected in Paper logs"
             exit 1
-          else
-            echo "No errors found in the container logs."
           fi
 
-      - name: Stop and clean up
+      - name: Cleanup
         if: always()
-        run: docker rm -f test-paper-server || true
-
+        run: docker rm -f minecraft || true
 
   test-purpur:
     needs: build
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        mc-version: ["26.2", "26.3"]
+
     steps:
       - name: Download plugin JAR
         uses: actions/download-artifact@v4
         with:
           name: plugin-jar
-          path: plugins
+          path: plugin
 
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v3
-
-      - name: Run Purpur Server in Docker with plugin
+      - name: Start Purpur server
         run: |
           docker run -d \
-          --name test-purpur-server \
-          -e EULA=TRUE \
-          -e TYPE=PURPUR \
-          -e VERSION=${MC_VERSION} \
-          -e MAX_TICK_TIME=-1 \
-          -e JVM_DD_OPTS=disable.watchdog:true \
-          -v ${{ github.workspace }}/plugins:/plugins \
-          -p 127.0.0.1:25565:25565 \
-          itzg/minecraft-server:latest
+            --name minecraft \
+            -p 25565:25565 \
+            -e EULA=TRUE \
+            -e TYPE=PURPUR \
+            -e VERSION=${{ matrix.mc-version }} \
+            -e MEMORY=2G \
+            -v "${{ github.workspace }}/plugin:/plugins" \
+            itzg/minecraft-server:latest
 
-          echo "Starting Purpur server..."
-          sleep 2
-
-      - name: Delayed server health check
+      - name: Wait for server startup
         run: |
-          echo "Waiting for server to become healthy..."
-
-          for i in {1..20}; do
-            healthy=$(docker exec test-purpur-server mc-monitor status --host 127.0.0.1 || echo "unhealthy")
-            echo "Status: $healthy"
-
-            if [[ "$healthy" == *"online"* ]]; then
-              echo "Server is online!"
-              docker exec -i test-purpur-server rcon-cli "luma cyclemoonstates"
+          for i in {1..60}; do
+            if docker exec minecraft rcon-cli "list" >/dev/null 2>&1; then
+              echo "Purpur server is ready"
               exit 0
             fi
-
-            sleep 6
+            sleep 10
           done
-
-          echo "Server failed health check, timeout."
-          docker logs test-purpur-server
+          echo "Purpur server failed to start"
+          docker logs minecraft
           exit 1
 
-      - name: Stop the server
-        run: docker stop test-purpur-server || true
+      - name: Test Lunamatic
+        run: docker exec minecraft rcon-cli "luma cyclemoonstates"
 
-      - name: Retrieve server logs
-        run: docker logs test-purpur-server
-
-      - name: Check Minecraft server logs for errors
+      - name: Check server logs
+        if: always()
         run: |
-          echo "Checking container logs for errors..."
-
-          LOG_OUTPUT=$(docker logs test-purpur-server 2>&1)
-          ERROR_LINES=$(echo "$LOG_OUTPUT" | grep 'ERROR]:' || true)
-
-          if [ -n "$ERROR_LINES" ]; then
-            echo "Errors were found in the server logs:"
-            echo "$ERROR_LINES"
+          docker logs minecraft 2>&1 | tee purpur.log
+          if grep -E '\[ERROR\]:' purpur.log; then
+            echo "Errors detected in Purpur logs"
             exit 1
-          else
-            echo "No errors found in the container logs."
           fi
 
-      - name: Stop and clean up
+      - name: Cleanup
         if: always()
-        run: docker rm -f test-purpur-server || true
-
+        run: docker rm -f minecraft || true
 
   test-folia:
     needs: build
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        mc-version: ["26.2", "26.3"]
+
     steps:
       - name: Download plugin JAR
         uses: actions/download-artifact@v4
         with:
           name: plugin-jar
-          path: plugins
+          path: plugin
 
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v3
-
-      - name: Run Folia Server in Docker with plugin
+      - name: Start Folia server
         run: |
           docker run -d \
-          --name test-folia-server \
-          -e EULA=TRUE \
-          -e TYPE=FOLIA \
-          -e VERSION=${MC_VERSION} \
-          -e MAX_TICK_TIME=-1 \
-          -e JVM_DD_OPTS=disable.watchdog:true \
-          -v ${{ github.workspace }}/plugins:/plugins \
-          -p 127.0.0.1:25565:25565 \
-          itzg/minecraft-server:latest
+            --name minecraft \
+            -p 25565:25565 \
+            -e EULA=TRUE \
+            -e TYPE=FOLIA \
+            -e VERSION=${{ matrix.mc-version }} \
+            -e MEMORY=2G \
+            -v "${{ github.workspace }}/plugin:/plugins" \
+            itzg/minecraft-server:latest
 
-          echo "Starting Folia server..."
-          sleep 2
-
-      - name: Delayed server health check
+      - name: Wait for server startup
         run: |
-          echo "Waiting for server to become healthy..."
-
-          for i in {1..20}; do
-            healthy=$(docker exec test-folia-server mc-monitor status --host 127.0.0.1 || echo "unhealthy")
-            echo "Status: $healthy"
-
-            if [[ "$healthy" == *"online"* ]]; then
-              echo "Server is online!"
-              docker exec -i test-folia-server rcon-cli "luma cyclemoonstates"
+          for i in {1..60}; do
+            if docker exec minecraft rcon-cli "list" >/dev/null 2>&1; then
+              echo "Folia server is ready"
               exit 0
             fi
-
-            sleep 6
+            sleep 10
           done
-
-          echo "Server failed health check, timeout."
-          docker logs test-folia-server
+          echo "Folia server failed to start"
+          docker logs minecraft
           exit 1
 
-      - name: Stop the server
-        run: docker stop test-folia-server || true
+      - name: Test Lunamatic
+        run: docker exec minecraft rcon-cli "luma cyclemoonstates"
 
-      - name: Retrieve server logs
-        run: docker logs test-folia-server
-
-      - name: Check Minecraft server logs for errors
+      - name: Check server logs
+        if: always()
         run: |
-          echo "Checking container logs for errors..."
-
-          LOG_OUTPUT=$(docker logs test-folia-server 2>&1)
-          ERROR_LINES=$(echo "$LOG_OUTPUT" | grep 'ERROR]: [Lunamatic]' || true)
-
-          if [ -n "$ERROR_LINES" ]; then
-            echo "Errors were found in the server logs:"
-            echo "$ERROR_LINES"
+          docker logs minecraft 2>&1 | tee folia.log
+          if grep -E '\[Lunamatic\].*\[ERROR\]' folia.log; then
+            echo "Lunamatic errors detected in Folia logs"
             exit 1
-          else
-            echo "No Lunamatic errors found in the container logs."
           fi
 
-      - name: Stop and clean up
+      - name: Cleanup
         if: always()
-        run: docker rm -f test-folia-server || true
+        run: docker rm -f minecraft || true

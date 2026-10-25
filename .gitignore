@@ -24,6 +24,9 @@ gradle-app.setting
 run/*
 !run/eula.txt
 
+# Local Minecraft test servers
+/run-test-*/
+
 # IntelliJ
 out/
 .idea/
