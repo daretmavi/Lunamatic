@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
   "label": "dependency-submission",
-  "message": "failed",
-  "color": "red"
+  "message": "passing",
+  "color": "green"
 }
