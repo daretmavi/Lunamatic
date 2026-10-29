@@ -1,16 +1,18 @@
+
 {
   "clock": "lunamatic:blood_moon",
   "period_ticks": 24000,
   "tracks": {
     "minecraft:visual/ambient_light_color": {
+      "modifier": "multiply",
       "keyframes": [
         {
           "ticks": 0,
-          "value": "#0a0a0a"
+          "value": "#ffffff"
         },
         {
           "ticks": 1,
-          "value": "#120404"
+          "value": "#ffffff"
         },
         {
           "ticks": 12000,
@@ -22,8 +24,8 @@
         }
       ]
     },
-
     "minecraft:visual/block_light_tint": {
+      "modifier": "multiply",
       "keyframes": [
         {
           "ticks": 0,
@@ -31,7 +33,7 @@
         },
         {
           "ticks": 1,
-          "value": "#fffafa"
+          "value": "#ffffff"
         },
         {
           "ticks": 12000,
@@ -43,8 +45,8 @@
         }
       ]
     },
-
     "minecraft:visual/sky_light_color": {
+      "modifier": "multiply",
       "keyframes": [
         {
           "ticks": 0,
@@ -52,7 +54,7 @@
         },
         {
           "ticks": 1,
-          "value": "#ffb0b0"
+          "value": "#ffffff"
         },
         {
           "ticks": 12000,
@@ -64,16 +66,16 @@
         }
       ]
     },
-
     "minecraft:visual/sky_color": {
+      "modifier": "multiply",
       "keyframes": [
         {
           "ticks": 0,
-          "value": "#78a7ff"
+          "value": "#ffffff"
         },
         {
           "ticks": 1,
-          "value": "#3d060b"
+          "value": "#ffffff"
         },
         {
           "ticks": 12000,
@@ -85,16 +87,16 @@
         }
       ]
     },
-
     "minecraft:visual/fog_color": {
+      "modifier": "multiply",
       "keyframes": [
         {
           "ticks": 0,
-          "value": "#c0d8ff"
+          "value": "#ffffff"
         },
         {
           "ticks": 1,
-          "value": "#280509"
+          "value": "#ffffff"
         },
         {
           "ticks": 12000,
